@@ -1,4 +1,4 @@
-# DRL4DOE
+# 🤖 DRL4DOE
 
 ## Installation
 Run `pip install -e .` in the root directory.
