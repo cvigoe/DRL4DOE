@@ -11,7 +11,7 @@ from rlkit.exploration_strategies.base import \
     PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.epsilon_greedy import EpsilonGreedy
 from rlkit.policies.argmax import ArgmaxDiscretePolicy
-from rlkit.torch.dqn.dqn import DQNTrainer
+from rlkit.torch.dqn.double_dqn import DoubleDQNTrainer
 from rlkit.torch.networks import Mlp
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
@@ -60,7 +60,7 @@ def experiment(variant):
         expl_env,
         expl_policy,
     )
-    trainer = DQNTrainer(
+    trainer = DoubleDQNTrainer(
         qf=qf,
         target_qf=target_qf,
         qf_criterion=qf_criterion,
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             q_architecture=args.q_architecture,
         ),
         env_kwargs=dict(
-            joint_info=args.join_info,
+            joint_info=args.joint_info,
         )
     )
     setup_logger(args.run_id, variant=variant)
