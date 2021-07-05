@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_id', required=True)
     parser.add_argument('--q_architecture', default='500,500')
-    parser.add_argument('--epochs', type=int, default=3000)
+    parser.add_argument('--epochs', type=int, default=1000)
     parser.add_argument('--joint_info', action='store_true')
     parser.add_argument('--act_dim', type=int, default=10)
     parser.add_argument('--region_length', type=float, default=1)
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     parser.add_argument('--length_scale_prior_lower', type=float)
     parser.add_argument('--length_scale_prior_upper', type=float)
     parser.add_argument('--cuda_device', default='')
-    args = parser.parse_args()
+    args = parser.parse_args(remaining)
     variant = dict(
         algorithm="DDQN",
         version="normal",
