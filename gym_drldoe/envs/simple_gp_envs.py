@@ -4,6 +4,8 @@ Simple toy environments to test on.
 Author: Ian Char
 Date: 06/28/2021
 """
+from functools import partial
+
 import gym
 import numpy as np
 
@@ -20,18 +22,24 @@ class RandomGridGPEnv(gym.Env):
             self,
             joint_info=True,
             act_dim=10,
-            noise_sigma=1,
+            noise_sigma=1e-3,
             sample_fidelity=250,
             region_length=1,
+            length_scale=0.1,
+            length_scale_prior_bounds=None,
     ):
         """Constructor:
         Args:
             joint_information: Whether to have joint information
                 about the environment or just marginal info.
-            action_dim: The number of options the agent has every
+            act_dim: The number of options the agent has every
                 iteration. This corresponds to number of grid pts.
             noise_sigma: Standard deviation of the noise.
             sample_fidelity: The fidelity of the function drawn.
+            region_length: How long the X region should be.
+            length_scale: Length scale parameter for the SE_kernel.
+            length_scale_prior_bounds: Optional tuple of lower and upper bound
+                for uniform prior over length scale e.g. (0.1, 0.3)
         """
         super().__init__()
         self._joint_info = joint_info
@@ -46,9 +54,11 @@ class RandomGridGPEnv(gym.Env):
         )
         self.action_space = gym.spaces.Discrete(act_dim)
         self.act_dim = act_dim
+        self._length_scale = length_scale
+        self._length_scale_prior_bounds = length_scale_prior_bounds
         self._noise_sigma = noise_sigma
-        self._gp = GP(zero_mean, SE_kernel, initial_dataset=None)
-        self._state = None
+        self._kernel = None
+        self._gp = None
         self._ground_truth = None
         self._sample_max_val = None
         self._grid_idxs = None
@@ -59,7 +69,7 @@ class RandomGridGPEnv(gym.Env):
     def reset(self, seed=None):
         """Reset the environment and return the state."""
         np.random.seed(seed)
-        self._gp = GP(zero_mean, SE_kernel, initial_dataset=None)
+        self._new_gp()
         mu, sigma = self._gp.calculate_prior_mean_cov(self._function_grid)
         self._ground_truth = self._gp.draw(mu, sigma)
         self._sample_max_val = np.max(self._ground_truth)
@@ -108,6 +118,17 @@ class RandomGridGPEnv(gym.Env):
             ))
             np.random.shuffle(self._grid_idxs)
         return self._function_grid[self._grid_idxs]
+
+    def _new_gp(self):
+        if self._length_scale_prior_bounds is not None:
+            self._length_scale = np.random.uniform(
+                self._length_scale_prior_bounds[0],
+                self._length_scale_prior_bounds[1],
+            )
+        self._kernel = partial(SE_kernel, ell=self._length_scale)
+        self._gp = GP(zero_mean, self._kernel, initial_dataset=None,
+                      sigma2_n=self._noise_sigma)
+
 
     def render(self):
         pass

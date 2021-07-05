@@ -19,6 +19,7 @@ from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 from gym_drldoe.envs.simple_gp_envs import RandomGridGPEnv
+from experiments.configs import CONFIGS
 
 
 def s2i(string):
@@ -35,14 +36,15 @@ def experiment(variant):
     eval_env = RandomGridGPEnv(**variant['env_kwargs'])
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.n
+    arch = s2i(variant['policy_kwargs']['q_architecture'])
 
     qf = Mlp(
-        hidden_sizes=[32, 32],
+        hidden_sizes=arch,
         input_size=obs_dim,
         output_size=action_dim,
     )
     target_qf = Mlp(
-        hidden_sizes=[32, 32],
+        hidden_sizes=arch,
         input_size=obs_dim,
         output_size=action_dim,
     )
@@ -85,11 +87,24 @@ def experiment(variant):
 
 if __name__ == "__main__":
     # noinspection PyTypeChecker
+    config_parser = argparse.ArgumentParser()
+    config_parser.add_argument('--config')
+    config_arg, remaining = config_parser.parse_known_args()
+    defaults = None
+    if config_arg.config is not None:
+        config = config_arg.config
+        defaults = CONFIGS[config]
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_id', required=True)
     parser.add_argument('--q_architecture', default='500,500')
     parser.add_argument('--epochs', type=int, default=3000)
     parser.add_argument('--joint_info', action='store_true')
+    parser.add_argument('--act_dim', type=int, default=10)
+    parser.add_argument('--region_length', type=float, default=1)
+    parser.add_argument('--sample_fidelity', type=int, default=250)
+    parser.add_argument('--length_scale', type=float, default=0.1)
+    parser.add_argument('--length_scale_prior_lower', type=float)
+    parser.add_argument('--length_scale_prior_upper', type=float)
     parser.add_argument('--cuda_device', default='')
     args = parser.parse_args()
     variant = dict(
@@ -114,8 +129,17 @@ if __name__ == "__main__":
         ),
         env_kwargs=dict(
             joint_info=args.join_info,
+            act_dim=args.act_dim,
+            sample_fidelity=args.sample_fidelity,
+            region_length=args.region_length,
+            length_scale=args.length_scale,
         )
     )
+    if (args.length_scale_prior_lower is not None
+            and args.length_scale_prior_upper is not None):
+        variant['env_kwargs']['length_scale_prior_bounds'] =\
+                (args.length_scale_prior_lower,
+                        args.length_scale_prior_upper)
     setup_logger(args.run_id, variant=variant)
     ptu.set_gpu_mode(args.cuda_device != '', gpu_id=args.cuda_device)
     experiment(variant)
