@@ -79,9 +79,9 @@ class DRL4DOE(gym.Env):
             for j in range(i,Sig.shape[1]):
                 upper_Sig.append(Sig[i,j])
         diag_Sig = np.diag(Sig)
-        return np.concatenate([mu,diag_Sig]), 
-        -1*np.array(max(self.ground_truth) - 
-            self.ground_truth[action]), 
+        return np.concatenate([mu,diag_Sig]),
+        -1*np.array(max(self.ground_truth) -
+            self.ground_truth[action]),
         np.array(self.t > self.T) , {}
 
 class GP():
@@ -102,26 +102,28 @@ class GP():
         return test_points[
         np.argmax(mu + np.sqrt(beta_t)*np.diag(Sig))]
 
-        
-    def calculate_prior_mean_cov(self, test_points):        
+
+    def calculate_prior_mean_cov(self, test_points):
         X_test = test_points
-        
+
         mu_test_prior = self.mean_function(X_test)
         Sigma_test_test_prior = self.kernel(X_test, X_test)
         return mu_test_prior, Sigma_test_test_prior
 
     def calculate_posterior_mean_cov(self, test_points):
+        if self.dataset is None:
+            return self.calculate_prior_mean_cov(test_points)
         X_train = self.dataset[:,0]
         y_train = self.dataset[:,1]
-        
+
         X_test = test_points
-        
-        mu_train_prior = self.mean_function(X_train)        
+
+        mu_train_prior = self.mean_function(X_train)
         mu_test_prior = self.mean_function(X_test)
-        
+
         Sigma_train_train_prior = self.kernel(X_train, X_train)
-        Sigma_train_test_prior = self.kernel(X_train, X_test)        
-        Sigma_test_test_prior = self.kernel(X_test, X_test)                
+        Sigma_train_test_prior = self.kernel(X_train, X_test)
+        Sigma_test_test_prior = self.kernel(X_test, X_test)
 
         L = np.linalg.cholesky(Sigma_train_train_prior + \
             self.sigma2_n*np.eye(*Sigma_train_train_prior.shape))
