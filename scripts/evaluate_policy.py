@@ -16,7 +16,7 @@ from policies.baselines import RlPolicy, RandomPolicy, UCBPolicy
 
 def evaluate(args):
     env = RandomGridGPEnv(joint_info=args.joint_info)
-    act_dim = env.action_space.low.size
+    act_dim = env.action_space.n
     if args.policy_type == 'rl':
         policy = RlPolicy(args.rl_policy_path)
     elif args.policy_type == 'random':

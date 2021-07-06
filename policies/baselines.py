@@ -33,7 +33,7 @@ class RandomPolicy(Policy):
         self.act_dim = act_dim
 
     def get_action(self, state):
-        return np.random.randint(self.act_dim)
+        return np.random.randint(self.act_dim), {}
 
 
 class UCBPolicy(Policy):
@@ -47,7 +47,8 @@ class UCBPolicy(Policy):
         self.t = 0
 
     def get_action(self, state):
-        beta_t = 2* np.log( self.t**(5/2) * (np.pi**2) / (3*delta))
+        self.t += 1
+        beta_t = 2* np.log( self.t**(5/2) * (np.pi**2) / (3*self.delta))
         mu = state[:self.act_dim]
-        vrs = stats[self.act_dim:2 * self.act_dim]
-        return np.argmax(mu + np.sqrt(beta_t) * vrs)
+        vrs = state[self.act_dim:2 * self.act_dim]
+        return np.argmax(mu + np.sqrt(beta_t) * vrs), {'beta': beta_t}
