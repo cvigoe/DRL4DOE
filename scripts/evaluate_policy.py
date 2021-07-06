@@ -12,20 +12,17 @@ import torch
 from tqdm import tqdm
 
 from gym_drldoe.envs.simple_gp_envs import RandomGridGPEnv
-from rlkit.policies.argmax import ArgmaxDiscretePolicy
-
-
-def load_policy(args):
-    loaded = torch.load(args.rl_policy_path)
-    return ArgmaxDiscretePolicy(loaded['trainer/qf'].cpu())
+from policies.baselines import RlPolicy, RandomPolicy, UCBPolicy
 
 def evaluate(args):
-    if args.policy_type == 'rl':
-        policy = load_policy(args)
-    elif args.policy_type == 'ucb':
-        raise NotImplementedError('TODO')
-        # policy = ucb_policy
     env = RandomGridGPEnv(joint_info=args.joint_info)
+    act_dim = env.action_space.low.size
+    if args.policy_type == 'rl':
+        policy = RlPolicy(args.rl_policy_path)
+    elif args.policy_type == 'random':
+        policy = RandomPolicy(act_dim)
+    elif args.policy_type == 'ucb':
+        policy = UCBPolicy(act_dim)
     regrets = []
     simple_regrets = []
     for seed in tqdm(range(args.num_evals)):
@@ -52,7 +49,8 @@ def evaluate(args):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_path', required=True)
-    parser.add_argument('--policy_type', required=True, choices=['rl', 'ucb'])
+    parser.add_argument('--policy_type', required=True,
+            choices=['rl', 'ucb', 'random'])
     parser.add_argument('--rl_policy_path')
     parser.add_argument('--joint_info', action='store_true')
     parser.add_argument('--episode_length', type=int, default=50)
