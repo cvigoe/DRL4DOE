@@ -106,6 +106,8 @@ if __name__ == "__main__":
     parser.add_argument('--length_scale_prior_lower', type=float)
     parser.add_argument('--length_scale_prior_upper', type=float)
     parser.add_argument('--cuda_device', default='')
+    if defaults is not None:
+        parser.set_defaults(**defaults)
     args = parser.parse_args(remaining)
     variant = dict(
         algorithm="DDQN",
