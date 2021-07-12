@@ -22,16 +22,20 @@ class RandomGridGPEnv(gym.Env):
             self,
             joint_info=True,
             act_dim=10,
+            horizon=float('inf'),
             noise_sigma=1e-3,
             sample_fidelity=250,
             region_length=1,
             length_scale=0.1,
             length_scale_prior_bounds=None,
+            relu_improvement_reward=False,
+            time_in_state=False,
     ):
         """Constructor:
         Args:
             joint_information: Whether to have joint information
                 about the environment or just marginal info.
+            horizon: How long we can roll out before returning a terminal.
             act_dim: The number of options the agent has every
                 iteration. This corresponds to number of grid pts.
             noise_sigma: Standard deviation of the noise.
@@ -40,6 +44,10 @@ class RandomGridGPEnv(gym.Env):
             length_scale: Length scale parameter for the SE_kernel.
             length_scale_prior_bounds: Optional tuple of lower and upper bound
                 for uniform prior over length scale e.g. (0.1, 0.3)
+            relu_improvement_reward: Whether reward should be relu improvement
+                over the best seen.
+            time_in_state: Whether the time should be included into state.
+                If set to True, append to end of state.
         """
         super().__init__()
         self._joint_info = joint_info
@@ -54,13 +62,18 @@ class RandomGridGPEnv(gym.Env):
         )
         self.action_space = gym.spaces.Discrete(act_dim)
         self.act_dim = act_dim
+        self._horizon = horizon
         self._length_scale = length_scale
         self._length_scale_prior_bounds = length_scale_prior_bounds
         self._noise_sigma = noise_sigma
+        self._relu_improvement_reward = relu_improvement_reward
+        self._time_in_state = time_in_state
         self._kernel = None
         self._gp = None
         self._ground_truth = None
         self._sample_max_val = None
+        self._sample_min_val = None
+        self._best_found = None
         self._grid_idxs = None
         self._t = 0
         self._function_grid = np.linspace(0, region_length, sample_fidelity)
@@ -73,7 +86,9 @@ class RandomGridGPEnv(gym.Env):
         mu, sigma = self._gp.calculate_prior_mean_cov(self._function_grid)
         self._ground_truth = self._gp.draw(mu, sigma)
         self._sample_max_val = np.max(self._ground_truth)
+        self._sample_min_val = np.min(self._ground_truth)
         self._t = 0
+        self._best_found = self._sample_min_val
         return self._get_obs(self._get_new_grid())
 
     def step(self, action):
@@ -84,8 +99,15 @@ class RandomGridGPEnv(gym.Env):
         self._gp.add_observations(np.array([[xpt, obs]]))
         self._t += 1
         nxt = self._get_obs(self._get_new_grid())
-        rew = val - self._sample_max_val
-        done = False
+        if self._relu_improvement_reward:
+            rew = max(0, (val - self._best_found)
+                          / (self._sample_max_val - self._sample_min_val))
+        else:
+            rew = val - self._sample_max_val
+        self._best_found = max(self._best_found, val)
+        done = self._t >= self._horizon
+        if self._time_in_state:
+            nxt = np.append(nxt, self._t)
         return nxt, rew, done, {}
 
     def _get_obs(self, grid):
