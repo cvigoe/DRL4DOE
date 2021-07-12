@@ -97,6 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_id', required=True)
     parser.add_argument('--q_architecture', default='500,500')
+    parser.add_argument('--horizon',, default=50)
     parser.add_argument('--epochs', type=int, default=1000)
     parser.add_argument('--joint_info', action='store_true')
     parser.add_argument('--act_dim', type=int, default=10)
@@ -105,6 +106,8 @@ if __name__ == "__main__":
     parser.add_argument('--length_scale', type=float, default=0.1)
     parser.add_argument('--length_scale_prior_lower', type=float)
     parser.add_argument('--length_scale_prior_upper', type=float)
+    parser.add_argument('--relu_improvement_reward', action='store_true')
+    parser.add_argument('--time_in_state', action='store_true')
     parser.add_argument('--cuda_device', default='')
     if defaults is not None:
         parser.set_defaults(**defaults)
@@ -119,7 +122,7 @@ if __name__ == "__main__":
             num_trains_per_train_loop=1000,
             num_expl_steps_per_train_loop=1000,
             min_num_steps_before_training=500,
-            max_path_length=50,
+            max_path_length=args.horizon,
             batch_size=256,
         ),
         trainer_kwargs=dict(
@@ -132,6 +135,7 @@ if __name__ == "__main__":
         env_kwargs=dict(
             joint_info=args.joint_info,
             act_dim=args.act_dim,
+            horizon=args.horizon,
             sample_fidelity=args.sample_fidelity,
             region_length=args.region_length,
             length_scale=args.length_scale,
