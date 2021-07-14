@@ -4,6 +4,9 @@ List of policies given discrete action choices.
 import abc
 
 import numpy as np
+import torch
+
+from rlkit.policies.argmax import ArgmaxDiscretePolicy
 
 
 class Policy(metaclass=abc.ABCMeta):
@@ -24,7 +27,7 @@ class RlPolicy(Policy):
         self.policy = ArgmaxDiscretePolicy(loaded['trainer/qf'].cpu())
 
     def get_action(self, state):
-        return self.policy.get_action()
+        return self.policy.get_action(state)
 
 
 class RandomPolicy(Policy):

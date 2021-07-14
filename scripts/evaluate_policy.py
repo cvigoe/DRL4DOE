@@ -15,7 +15,11 @@ from gym_drldoe.envs.simple_gp_envs import RandomGridGPEnv
 from policies.baselines import RlPolicy, RandomPolicy, UCBPolicy
 
 def evaluate(args):
-    env = RandomGridGPEnv(joint_info=args.joint_info)
+    env = RandomGridGPEnv(
+        joint_info=args.joint_info,
+        time_in_state=args.time_in_state,
+        rew_scale=1,
+    )
     act_dim = env.action_space.n
     if args.policy_type == 'rl':
         policy = RlPolicy(args.rl_policy_path)
@@ -55,6 +59,7 @@ def parse_args():
     parser.add_argument('--joint_info', action='store_true')
     parser.add_argument('--episode_length', type=int, default=50)
     parser.add_argument('--num_evals', type=int, default=100)
+    parser.add_argument('--time_in_state', action='store_true')
     parser.add_argument('--pudb', action='store_true')
     return parser.parse_args()
 

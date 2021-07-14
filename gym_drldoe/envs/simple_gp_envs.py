@@ -30,6 +30,7 @@ class RandomGridGPEnv(gym.Env):
             length_scale_prior_bounds=None,
             relu_improvement_reward=False,
             time_in_state=False,
+            rew_scale=100,
     ):
         """Constructor:
         Args:
@@ -48,10 +49,11 @@ class RandomGridGPEnv(gym.Env):
                 over the best seen.
             time_in_state: Whether the time should be included into state.
                 If set to True, append to end of state.
+            rew_scale: How much to scale the rewards by.
         """
         super().__init__()
         self._joint_info = joint_info
-        obs_dim = act_dim * 2
+        obs_dim = act_dim * 2 + time_in_state
         if joint_info:
             obs_dim += int(act_dim * (act_dim - 1) / 2)
         self.observation_space = gym.spaces.Box(
@@ -68,6 +70,7 @@ class RandomGridGPEnv(gym.Env):
         self._noise_sigma = noise_sigma
         self._relu_improvement_reward = relu_improvement_reward
         self._time_in_state = time_in_state
+        self._rew_scale = rew_scale
         self._kernel = None
         self._gp = None
         self._ground_truth = None
@@ -104,10 +107,9 @@ class RandomGridGPEnv(gym.Env):
                           / (self._sample_max_val - self._sample_min_val))
         else:
             rew = val - self._sample_max_val
+        rew *= self._rew_scale
         self._best_found = max(self._best_found, val)
         done = self._t >= self._horizon
-        if self._time_in_state:
-            nxt = np.append(nxt, self._t)
         return nxt, rew, done, {}
 
     def _get_obs(self, grid):
@@ -117,7 +119,10 @@ class RandomGridGPEnv(gym.Env):
             var_info = sigma[np.triu_indices(sigma.shape[0])]
         else:
             var_info = sigma.diagonal()
-        return np.concatenate([mu, var_info])
+        obs = np.concatenate([mu, var_info])
+        if self._time_in_state:
+            obs = np.append(obs, self._t)
+        return obs
 
     def _get_new_grid(self):
         if self._grid_idxs is None:

@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_id', required=True)
     parser.add_argument('--q_architecture', default='500,500')
-    parser.add_argument('--horizon',, default=50)
+    parser.add_argument('--horizon', default=50)
     parser.add_argument('--epochs', type=int, default=1000)
     parser.add_argument('--joint_info', action='store_true')
     parser.add_argument('--act_dim', type=int, default=10)
@@ -109,6 +109,7 @@ if __name__ == "__main__":
     parser.add_argument('--relu_improvement_reward', action='store_true')
     parser.add_argument('--time_in_state', action='store_true')
     parser.add_argument('--cuda_device', default='')
+    parser.add_argument('--pudb', action='store_true')
     if defaults is not None:
         parser.set_defaults(**defaults)
     args = parser.parse_args(remaining)
@@ -139,6 +140,8 @@ if __name__ == "__main__":
             sample_fidelity=args.sample_fidelity,
             region_length=args.region_length,
             length_scale=args.length_scale,
+            relu_improvement_reward=args.relu_improvement_reward,
+            time_in_state=args.time_in_state,
         )
     )
     if (args.length_scale_prior_lower is not None
@@ -148,4 +151,6 @@ if __name__ == "__main__":
                         args.length_scale_prior_upper)
     setup_logger(args.run_id, variant=variant)
     ptu.set_gpu_mode(args.cuda_device != '', gpu_id=args.cuda_device)
+    if args.pudb:
+        import pudb; pudb.set_trace()
     experiment(variant)
