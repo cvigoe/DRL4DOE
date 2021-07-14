@@ -31,6 +31,7 @@ class RandomGridGPEnv(gym.Env):
             relu_improvement_reward=False,
             time_in_state=False,
             rew_scale=100,
+            model_advantage=True,
     ):
         """Constructor:
         Args:
@@ -50,6 +51,9 @@ class RandomGridGPEnv(gym.Env):
             time_in_state: Whether the time should be included into state.
                 If set to True, append to end of state.
             rew_scale: How much to scale the rewards by.
+            model_advantage: Whether the GP should actually model the advantage
+                of selecting an action. This is done by simply selecting the
+                best observed from the mean.
         """
         super().__init__()
         self._joint_info = joint_info
@@ -71,6 +75,7 @@ class RandomGridGPEnv(gym.Env):
         self._relu_improvement_reward = relu_improvement_reward
         self._time_in_state = time_in_state
         self._rew_scale = rew_scale
+        self._model_advantage = model_advantage
         self._kernel = None
         self._gp = None
         self._ground_truth = None
@@ -115,13 +120,18 @@ class RandomGridGPEnv(gym.Env):
     def _get_obs(self, grid):
         """Get observation for the grid."""
         mu, sigma = self._gp.calculate_posterior_mean_cov(grid)
+        # Right now this is kind of cheating because at time step 0 the best
+        # found is the lowest point. We can get around this in the future
+        # by first selecting some points at random.
+        if self._model_advantage:
+            mu = mu - self._best_found
         if self._joint_info:
             var_info = sigma[np.triu_indices(sigma.shape[0])]
         else:
             var_info = sigma.diagonal()
         obs = np.concatenate([mu, var_info])
         if self._time_in_state:
-            obs = np.append(obs, self._t)
+            obs = np.append(obs, self._horizon - self._t)
         return obs
 
     def _get_new_grid(self):

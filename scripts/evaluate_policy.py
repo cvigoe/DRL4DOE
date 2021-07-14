@@ -19,6 +19,7 @@ def evaluate(args):
         joint_info=args.joint_info,
         time_in_state=args.time_in_state,
         rew_scale=1,
+        model_advantage=args.policy_type == 'rl',
     )
     act_dim = env.action_space.n
     if args.policy_type == 'rl':
