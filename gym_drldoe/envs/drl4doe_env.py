@@ -2,7 +2,7 @@
 DRL4DOE Gym Env
 
 Author: Conor Igoe
-Date: 05/06/2021
+Date: 02/09/2022
 """
 import pudb
 import gym
@@ -16,23 +16,22 @@ class DRL4DOE(gym.Env):
     """
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, num_test_points=10):
+    def __init__(self, num_test_points=50):
         super(DRL4DOE, self).__init__()
         self.num_test_points = num_test_points
-        self.action_space = spaces.Discrete(self.num_test_points)
-        tri_dim = ( int(self.num_test_points + 
-            (self.num_test_points*(self.num_test_points+1)/2) ))
+        self.action_space = spaces.Box( np.array([0]) , np.array([num_test_points]) )
         diag_dim = self.num_test_points*2
         self.observation_space = spaces.Box(   
             np.array([-1*np.inf]*diag_dim),    
             np.array([np.inf]*diag_dim))
 
-    def initialise_environment(self, env_str, noise_sigma=1, T=50, 
-        region_length=2):
+    def initialise_environment(self, env_str, noise_sigma=.1, T=30, 
+        region_length=20, ucb=False):
         self.test_points = np.linspace(0,region_length,
             self.num_test_points)
         self.noise_sigma = noise_sigma
         self.T = T
+        self.ucb = ucb
 
     def reset(self):
         """Resets the gym environment, redrawing ground truth
@@ -42,14 +41,11 @@ class DRL4DOE(gym.Env):
             numpy array of prior mean concatenated with flattened 
             upper triangular entries of covariance matrix
         """        
-        self.GP = GP(zero_mean, SE_kernel, initial_dataset=None)
+        self.GP = GP(zero_mean, SE_kernel, initial_dataset=None,
+            sigma2_n=self.noise_sigma**2)
         mu, Sig = self.GP.calculate_prior_mean_cov(self.test_points)
         self.ground_truth = self.GP.draw(mu, Sig)
         self.t = 0
-        upper_Sig = []
-        for i in range(Sig.shape[0]):
-            for j in range(i,Sig.shape[1]):
-                upper_Sig.append(Sig[i,j])
         diag_Sig = np.diag(Sig)
         return np.concatenate([mu, diag_Sig])
 
@@ -68,21 +64,29 @@ class DRL4DOE(gym.Env):
           when we exceed self.T budget.
 
         """
+        p = np.random.rand() 
+        if self.ucb and (p < 0.2):
+            mu, Sig = self.GP.calculate_posterior_mean_cov(
+                self.test_points)
+            delta = 0.95
+            beta_t = 2*np.log( (self.t+1)**(5/2) * (np.pi**2) / (3*delta)) # GP-UCB formula 
+            action = np.argmax(mu + np.sqrt(beta_t)*np.sqrt(np.diag(Sig)))
+        else:
+            action /= 2
+            action += 0.5
+            action = int(np.clip(action*self.num_test_points, 0, self.num_test_points))
+
         observation = self.ground_truth[action] + \
         np.random.randn()*self.noise_sigma
-        self.GP.add_observations(np.asarray([[action,observation]]))
+        self.GP.add_observations(np.asarray([[self.test_points[action],observation]]))
         self.t += 1
         mu, Sig = self.GP.calculate_posterior_mean_cov(
             self.test_points)
-        upper_Sig = []
-        for i in range(Sig.shape[0]):
-            for j in range(i,Sig.shape[1]):
-                upper_Sig.append(Sig[i,j])
         diag_Sig = np.diag(Sig)
-        return np.concatenate([mu,diag_Sig]),
+        return (np.concatenate([mu,diag_Sig]),
         -1*np.array(max(self.ground_truth) -
             self.ground_truth[action]),
-        np.array(self.t > self.T) , {}
+        np.array(self.t > self.T) , {})
 
 class GP():
     def __init__(self, mean_function, kernel, initial_dataset, 
@@ -160,3 +164,4 @@ def SE_kernel(X1, X2, sigma2=1, ell=1):
 
 def zero_mean(x):
     return np.zeros(x.shape)
+
