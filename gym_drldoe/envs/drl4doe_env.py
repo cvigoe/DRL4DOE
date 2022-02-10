@@ -47,7 +47,7 @@ class DRL4DOE(gym.Env):
         self.ground_truth = self.GP.draw(mu, Sig)
         self.t = 0
         diag_Sig = np.diag(Sig)
-        return np.concatenate([mu, diag_Sig])
+        return np.concatenate([mu, np.log(diag_Sig) ])
 
     def step(self, action):
         """Takes a step in the DRL4DOE toy problem.
@@ -74,7 +74,7 @@ class DRL4DOE(gym.Env):
         else:
             action /= 2
             action += 0.5
-            action = int(np.clip(action*self.num_test_points, 0, self.num_test_points))
+            action = int(np.clip(action*self.num_test_points, 0, self.num_test_points - 0.005))
 
         observation = self.ground_truth[action] + \
         np.random.randn()*self.noise_sigma
@@ -83,7 +83,7 @@ class DRL4DOE(gym.Env):
         mu, Sig = self.GP.calculate_posterior_mean_cov(
             self.test_points)
         diag_Sig = np.diag(Sig)
-        return (np.concatenate([mu,diag_Sig]),
+        return (np.concatenate([mu,np.log(diag_Sig)]),
         -1*np.array(max(self.ground_truth) -
             self.ground_truth[action]),
         np.array(self.t > self.T) , {})
