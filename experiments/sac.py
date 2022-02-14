@@ -34,7 +34,7 @@ def experiment(variant, env_variant):
     expl_env = gym.make(env_variant['env_str'])  
     eval_env = gym.make(env_variant['env_str'])
 
-    expl_env.initialise_environment(**env_variant,ucb=True)
+    expl_env.initialise_environment(**env_variant,ucb=False)
     eval_env.initialise_environment(**env_variant,ucb=False)
 
     obs_dim = expl_env.observation_space.low.size
