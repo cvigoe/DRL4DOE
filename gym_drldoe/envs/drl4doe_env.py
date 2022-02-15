@@ -26,12 +26,13 @@ class DRL4DOE(gym.Env):
             np.array([np.inf]*diag_dim))
 
     def initialise_environment(self, env_str, noise_sigma=.1, T=30, 
-        region_length=20, ucb=False):
+        region_length=20, ucb=False, NUM_MC_ITERS=500):
         self.test_points = np.linspace(0,region_length,
             self.num_test_points)
         self.noise_sigma = noise_sigma
         self.T = T
         self.ucb = ucb
+        self.NUM_MC_ITERS = NUM_MC_ITERS
 
     def reset(self):
         """Resets the gym environment, redrawing ground truth
@@ -83,10 +84,22 @@ class DRL4DOE(gym.Env):
         mu, Sig = self.GP.calculate_posterior_mean_cov(
             self.test_points)
         diag_Sig = np.diag(Sig)
+
+        reward = 0
+        for i in range(self.NUM_MC_ITERS):
+            draw = self.GP.draw(mu, Sig)
+            inst_regret = max(draw) - mu[action]
+            reward -= inst_regret/self.NUM_MC_ITERS
+
+        # return (np.concatenate([mu,np.log(diag_Sig)]),
+        # -1*np.array(max(self.ground_truth) -
+        #     self.ground_truth[action]),
+        # np.array(self.t > self.T) , {})
+
         return (np.concatenate([mu,np.log(diag_Sig)]),
-        -1*np.array(max(self.ground_truth) -
-            self.ground_truth[action]),
-        np.array(self.t > self.T) , {})
+        np.array(reward),
+        np.array(self.t > self.T),
+        {})
 
 class GP():
     def __init__(self, mean_function, kernel, initial_dataset, 

@@ -21,12 +21,13 @@ variant = dict(
         policy_lr=3E-4,                         # Need to tune
         qf_lr=3E-4,                             # Set same as policy
         reward_scale=5,                         # Need to tune
-        use_automatic_entropy_tuning=True,      # Need to try both
+        use_automatic_entropy_tuning=False,      # Need to try both
     ),
 )
 
 env_variant = dict(
     env_str='drl4doe-v0',   
+    NUM_MC_ITERS=500,
 )
 
 # variant = dict(
