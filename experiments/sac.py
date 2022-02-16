@@ -31,7 +31,7 @@ def flatten_dict(d, parent_key='', sep='_'):
     return dict(items)
 
 def experiment(variant, env_variant):
-    expl_env = gym.make(env_variant['env_str'])  
+    expl_env = gym.make(env_variant['env_str'])
     eval_env = gym.make(env_variant['env_str'])
 
     expl_env.initialise_environment(**env_variant,ucb=True)
@@ -105,13 +105,13 @@ def experiment(variant, env_variant):
 if __name__ == "__main__":
 
     for seed in range(10):
-        LR_pow = 2+(np.random.rand()*4)
-        LR = 10**(-LR_pow)
-        reward_scale = np.random.rand()*5
+        # LR_pow = 2+(np.random.rand()*4)
+        # LR = 10**(-LR_pow)
+        # reward_scale = np.random.rand()*5
 
-        variant['trainer_kwargs']['policy_lr'] = LR
-        variant['trainer_kwargs']['qf_lr'] = LR
-        variant['trainer_kwargs']['reward_scale'] = reward_scale
+        # variant['trainer_kwargs']['policy_lr'] = LR
+        # variant['trainer_kwargs']['qf_lr'] = LR
+        # variant['trainer_kwargs']['reward_scale'] = reward_scale
 
         experiment_name = sys.argv[1]
         run_name = sys.argv[2] + '_seed_' + str(seed)
