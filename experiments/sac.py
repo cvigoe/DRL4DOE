@@ -42,7 +42,7 @@ def experiment(variant, env_variant):
     action_dim = eval_env.action_space.low.size
 
     M = variant['layer_size']
-    M_actor = variant['layer_size_actor']
+    M_actor = int(variant['layer_size_actor'])
     UCB_rate = variant['UCB_rate']
     
     qf1 = FlattenMlp(
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         variant['trainer_kwargs']['qf_lr'] = LR
         variant['trainer_kwargs']['reward_scale'] = reward_scale
         variant['trainer_kwargs']['discount'] = discount
-        variant['layer_size_actor'] = layer_size_actor
+        variant['layer_size_actor'] = float(layer_size_actor)
         variant['UCB_rate'] = UCB_rate
         env_variant['NUM_MC_ITERS'] = NUM_MC_ITERS
 
