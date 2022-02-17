@@ -6,12 +6,13 @@ from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
-from rlkit.torch.sac.policies import TanhGaussianPolicy, MakeDeterministic
+from rlkit.torch.sac.policies import TanhGaussianPolicy, MakeDeterministic, MakeUCB
 from rlkit.torch.sac.sac import SACTrainer
 from rlkit.torch.networks import FlattenMlp
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 import gym_drldoe
+import pudb
 
 import mlflow
 from mlflow.tracking import MlflowClient
@@ -34,13 +35,16 @@ def experiment(variant, env_variant):
     expl_env = gym.make(env_variant['env_str'])
     eval_env = gym.make(env_variant['env_str'])
 
-    expl_env.initialise_environment(**env_variant,ucb=True)
-    eval_env.initialise_environment(**env_variant,ucb=False)
+    expl_env.initialise_environment(**env_variant)
+    eval_env.initialise_environment(**env_variant)
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
 
     M = variant['layer_size']
+    M_actor = variant['layer_size_actor']
+    UCB_rate = variant['UCB_rate']
+    
     qf1 = FlattenMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
@@ -64,16 +68,17 @@ def experiment(variant, env_variant):
     policy = TanhGaussianPolicy(
         obs_dim=obs_dim,
         action_dim=action_dim,
-        hidden_sizes=[M, M],
+        hidden_sizes=[M_actor, M_actor],
     )
     eval_policy = MakeDeterministic(policy)
+    expl_policy = MakeUCB(policy, UCB_rate=UCB_rate)
     eval_path_collector = MdpPathCollector(
         eval_env,
         eval_policy,
     )
     expl_path_collector = MdpPathCollector(
         expl_env,
-        policy,
+        expl_policy,
     )
     replay_buffer = EnvReplayBuffer(
         variant['replay_buffer_size'],
@@ -105,13 +110,21 @@ def experiment(variant, env_variant):
 if __name__ == "__main__":
 
     for seed in range(10):
-        # LR_pow = 2+(np.random.rand()*4)
-        # LR = 10**(-LR_pow)
-        # reward_scale = np.random.rand()*5
+        LR_coeff = 1+(np.random.rand()*4)
+        LR = LR_coeff*(1e-4)
+        reward_scale = 2+np.random.rand()*2
+        layer_size_actor = np.random.choice([64, 128, 256])
+        discount = 0.5 + (np.random.rand()/2.1)
+        UCB_rate = (np.random.rand()/4)
+        NUM_MC_ITERS = int(np.random.rand()*500)
 
-        # variant['trainer_kwargs']['policy_lr'] = LR
-        # variant['trainer_kwargs']['qf_lr'] = LR
-        # variant['trainer_kwargs']['reward_scale'] = reward_scale
+        variant['trainer_kwargs']['policy_lr'] = LR
+        variant['trainer_kwargs']['qf_lr'] = LR
+        variant['trainer_kwargs']['reward_scale'] = reward_scale
+        variant['trainer_kwargs']['discount'] = discount
+        variant['layer_size_actor'] = layer_size_actor
+        variant['UCB_rate'] = UCB_rate
+        env_variant['NUM_MC_ITERS'] = NUM_MC_ITERS
 
         experiment_name = sys.argv[1]
         run_name = sys.argv[2] + '_seed_' + str(seed)

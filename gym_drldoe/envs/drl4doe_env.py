@@ -26,12 +26,11 @@ class DRL4DOE(gym.Env):
             np.array([np.inf]*diag_dim))
 
     def initialise_environment(self, env_str, noise_sigma=.1, T=30, 
-        region_length=20, ucb=False, NUM_MC_ITERS=500):
+        region_length=20, NUM_MC_ITERS=500):
         self.test_points = np.linspace(0,region_length,
             self.num_test_points)
         self.noise_sigma = noise_sigma
         self.T = T
-        self.ucb = ucb
         self.NUM_MC_ITERS = NUM_MC_ITERS
 
     def reset(self):
@@ -65,17 +64,9 @@ class DRL4DOE(gym.Env):
           when we exceed self.T budget.
 
         """
-        p = np.random.rand() 
-        if self.ucb and (p < 0.2):
-            mu, Sig = self.GP.calculate_posterior_mean_cov(
-                self.test_points)
-            delta = 0.95
-            beta_t = 2*np.log( (self.t+1)**(5/2) * (np.pi**2) / (3*delta)) # GP-UCB formula 
-            action = np.argmax(mu + np.sqrt(beta_t)*np.sqrt(np.diag(Sig)))
-        else:
-            action /= 2
-            action += 0.5
-            action = int(np.clip(action*self.num_test_points, 0, self.num_test_points - 0.005))
+        action /= 2
+        action += 0.5
+        action = int(np.clip(action*self.num_test_points, 0, self.num_test_points - 0.005))
 
         observation = self.ground_truth[action] + \
         np.random.randn()*self.noise_sigma
@@ -85,16 +76,12 @@ class DRL4DOE(gym.Env):
             self.test_points)
         diag_Sig = np.diag(Sig)
 
-        reward = 0
+        reward = -1*(max(self.ground_truth) - self.ground_truth[action])/(self.NUM_MC_ITERS+1)
+
         for i in range(self.NUM_MC_ITERS):
             draw = self.GP.draw(mu, Sig)
             inst_regret = max(draw) - mu[action]
-            reward -= inst_regret/self.NUM_MC_ITERS
-
-        # return (np.concatenate([mu,np.log(diag_Sig)]),
-        # -1*np.array(max(self.ground_truth) -
-        #     self.ground_truth[action]),
-        # np.array(self.t > self.T) , {})
+            reward -= inst_regret/(self.NUM_MC_ITERS+1)
 
         return (np.concatenate([mu,np.log(diag_Sig)]),
         np.array(reward),
