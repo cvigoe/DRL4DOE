@@ -10,6 +10,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import numpy as np
 import torch
+import copy
 
 class DRL4DOE(gym.Env):
     """Initialises the DRL4DOE toy problem
@@ -64,6 +65,8 @@ class DRL4DOE(gym.Env):
           when we exceed self.T budget.
 
         """
+
+        action = copy.deepcopy(action)
         action /= 2
         action += 0.5
         action = int(np.clip(action*self.num_test_points, 0, self.num_test_points - 0.005))
