@@ -114,7 +114,7 @@ if __name__ == "__main__":
         LR = LR_coeff*(1e-4)
         reward_scale = 2+np.random.rand()*2
         layer_size_actor = np.random.choice([64, 128, 256])
-        discount = 0.5 + (np.random.rand()/2.1)
+        discount = 0.995
         UCB_rate = (np.random.rand()/4)
         NUM_MC_ITERS = int(np.random.rand()*500)
 
