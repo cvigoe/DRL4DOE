@@ -32,8 +32,8 @@ def flatten_dict(d, parent_key='', sep='_'):
     return dict(items)
 
 def experiment(variant, env_variant):
-    expl_env = gym.make(env_variant['env_str'])
-    eval_env = gym.make(env_variant['env_str'])
+    expl_env = gym.make(env_variant['env_str'],num_test_points=env_variant['num_test_points'])
+    eval_env = gym.make(env_variant['env_str'],num_test_points=env_variant['num_test_points'])
 
     expl_env.initialise_environment(**env_variant)
     eval_env.initialise_environment(**env_variant)
