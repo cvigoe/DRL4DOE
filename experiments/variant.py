@@ -8,7 +8,7 @@ variant = dict(
     UCB_rate=0.2,
     replay_buffer_size=int(1E6),
     algorithm_kwargs=dict(
-        num_epochs=400,
+        num_epochs=4000,
         num_eval_steps_per_epoch=4000,
         num_trains_per_train_loop=1000,
         num_expl_steps_per_train_loop=1000,
@@ -29,6 +29,6 @@ variant = dict(
 
 env_variant = dict(
     env_str='drl4doe-v0',   
-    num_test_points=10,
-    region_length=5,
+    num_test_points=50,
+    region_length=20,
 )
