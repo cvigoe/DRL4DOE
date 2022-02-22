@@ -27,7 +27,14 @@ class DRL4DOE(gym.Env):
             np.array([np.inf]*diag_dim))
 
     def initialise_environment(self, env_str, noise_sigma=.1, T=30, 
-        region_length=20, NUM_MC_ITERS=500):
+        region_length=20, NUM_MC_ITERS=500,num_test_points=50):
+        self.num_test_points = num_test_points
+        self.action_space = spaces.Box( np.array([0]) , np.array([num_test_points]) )
+        diag_dim = self.num_test_points*2
+        self.observation_space = spaces.Box(   
+            np.array([-1*np.inf]*diag_dim),    
+            np.array([np.inf]*diag_dim))
+        
         self.test_points = np.linspace(0,region_length,
             self.num_test_points)
         self.noise_sigma = noise_sigma
