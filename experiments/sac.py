@@ -5,7 +5,7 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
-from rlkit.samplers.data_collector import MdpPathCollector
+from rlkit.samplers.data_collector import MdpPathCollector, explMdpPathCollector
 from rlkit.torch.sac.policies import TanhGaussianPolicy, MakeDeterministic, MakeUCB
 from rlkit.torch.sac.sac import SACTrainer
 from rlkit.torch.networks import FlattenMlp
@@ -76,7 +76,7 @@ def experiment(variant, env_variant):
         eval_env,
         eval_policy,
     )
-    expl_path_collector = MdpPathCollector(
+    expl_path_collector = explMdpPathCollector(
         expl_env,
         expl_policy,
     )
