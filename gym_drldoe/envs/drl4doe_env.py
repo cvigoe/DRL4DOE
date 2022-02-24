@@ -27,7 +27,8 @@ class DRL4DOE(gym.Env):
             np.array([np.inf]*diag_dim))
 
     def initialise_environment(self, env_str, noise_sigma=.1, T=30, 
-        region_length=20, NUM_MC_ITERS=500,num_test_points=50):
+        region_length=20, NUM_MC_ITERS=500,num_test_points=50,
+        burnin=5):
         self.num_test_points = num_test_points
         self.action_space = spaces.Box( np.array([0]) , np.array([num_test_points]) )
         diag_dim = self.num_test_points*2
@@ -40,6 +41,7 @@ class DRL4DOE(gym.Env):
         self.noise_sigma = noise_sigma
         self.T = T
         self.NUM_MC_ITERS = NUM_MC_ITERS
+        self.burnin = burnin
 
     def reset(self):
         """Resets the gym environment, redrawing ground truth
@@ -54,8 +56,18 @@ class DRL4DOE(gym.Env):
         mu, Sig = self.GP.calculate_prior_mean_cov(self.test_points)
         self.ground_truth = self.GP.draw(mu, Sig)
         self.t = 0
-        diag_Sig = np.diag(Sig)
-        return np.concatenate([mu, np.log(diag_Sig) ])
+        Sig = np.log(np.diag(Sig))
+        for t in range(self.burnin):
+            Sig = np.exp(Sig)
+            beta = 2*np.log(50*((t+1)**2)*(np.pi**2)/(6*0.05))
+            action = np.argmax(mu + np.sqrt(beta)*np.sqrt(Sig))
+            action /= 9
+            action -= 0.5
+            action *= 2            
+            state, reward, done, info = self.step(action)
+            mu, Sig = state[:self.num_test_points//2], state[self.num_test_points//2:]
+
+        return np.concatenate([mu, Sig])
 
     def step(self, action):
         """Takes a step in the DRL4DOE toy problem.
