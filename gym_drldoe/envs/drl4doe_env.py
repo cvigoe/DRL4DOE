@@ -65,7 +65,7 @@ class DRL4DOE(gym.Env):
             action -= 0.5
             action *= 2            
             state, reward, done, info = self.step(action)
-            mu, Sig = state[:self.num_test_points//2], state[self.num_test_points//2:]
+            mu, Sig = state[:self.num_test_points], state[self.num_test_points:]
 
         return np.concatenate([mu, Sig])
 

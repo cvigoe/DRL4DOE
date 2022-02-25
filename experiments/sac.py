@@ -76,10 +76,17 @@ def experiment(variant, env_variant):
         eval_env,
         eval_policy,
     )
-    expl_path_collector = explMdpPathCollector(
-        expl_env,
-        expl_policy,
-    )
+    if variant['random_initial']:    
+        expl_path_collector = explMdpPathCollector(
+            expl_env,
+            expl_policy,
+        )
+    else:
+        expl_path_collector = MdpPathCollector(
+            expl_env,
+            expl_policy,
+        )
+
     replay_buffer = EnvReplayBuffer(
         variant['replay_buffer_size'],
         expl_env,
