@@ -6,6 +6,7 @@ variant = dict(
     layer_size=256,
     layer_size_actor=256,
     UCB_rate=0.2,
+    random_initial=False,
     replay_buffer_size=int(1E6),
     algorithm_kwargs=dict(
         num_epochs=400,
@@ -32,5 +33,4 @@ env_variant = dict(
     num_test_points=10,
     region_length=5,
     burnin=5,
-    random_initial=False
 )
