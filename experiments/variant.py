@@ -9,12 +9,12 @@ variant = dict(
     random_initial=False,
     replay_buffer_size=int(1E6),
     algorithm_kwargs=dict(
-        num_epochs=400,
+        num_epochs=4000,
         num_eval_steps_per_epoch=4000,
         num_trains_per_train_loop=1000,
         num_expl_steps_per_train_loop=1000,
         min_num_steps_before_training=1000,
-        max_path_length=40,
+        max_path_length=1000,
         batch_size=256,
     ),
     trainer_kwargs=dict(
@@ -29,8 +29,8 @@ variant = dict(
 )
 
 env_variant = dict(
-    env_str='drl4doe-v0',   
-    num_test_points=10,
-    region_length=5,
-    burnin=5,
+    env_str='HalfCheetah-v1',   
+    # num_test_points=10,
+    # region_length=5,
+    # burnin=5,
 )

@@ -35,15 +35,16 @@ def experiment(variant, env_variant):
     expl_env = gym.make(env_variant['env_str'])
     eval_env = gym.make(env_variant['env_str'])
 
-    expl_env.initialise_environment(**env_variant)
-    eval_env.initialise_environment(**env_variant)
+    if variant['env_str'] == 'drl4doe-v0':
+        expl_env.initialise_environment(**env_variant)
+        eval_env.initialise_environment(**env_variant)
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
 
     M = variant['layer_size']
     M_actor = int(variant['layer_size_actor'])
-    UCB_rate = variant['UCB_rate']
+    # UCB_rate = variant['UCB_rate']
     
     qf1 = FlattenMlp(
         input_size=obs_dim + action_dim,
@@ -71,7 +72,7 @@ def experiment(variant, env_variant):
         hidden_sizes=[M_actor, M_actor],
     )
     eval_policy = MakeDeterministic(policy)
-    expl_policy = MakeUCB(policy, UCB_rate=UCB_rate)
+    # expl_policy = MakeUCB(policy, UCB_rate=UCB_rate)
     eval_path_collector = MdpPathCollector(
         eval_env,
         eval_policy,
@@ -112,8 +113,6 @@ def experiment(variant, env_variant):
     algorithm.to(ptu.device)
     algorithm.train()
 
-
-
 if __name__ == "__main__":
 
     for seed in range(10):
@@ -125,13 +124,18 @@ if __name__ == "__main__":
         UCB_rate = (np.random.rand()/4)
         NUM_MC_ITERS = int(np.random.rand()*500)
 
+        discount = 0.99
+        layer_size_actor = 256
+        reward_scale = 5
+        LR = 3*(1e-4)
+
         variant['trainer_kwargs']['policy_lr'] = LR
         variant['trainer_kwargs']['qf_lr'] = LR
         variant['trainer_kwargs']['reward_scale'] = reward_scale
         variant['trainer_kwargs']['discount'] = discount
         variant['layer_size_actor'] = float(layer_size_actor)
-        variant['UCB_rate'] = UCB_rate
-        env_variant['NUM_MC_ITERS'] = NUM_MC_ITERS
+        # variant['UCB_rate'] = UCB_rate
+        # env_variant['NUM_MC_ITERS'] = NUM_MC_ITERS
 
         experiment_name = sys.argv[1]
         run_name = sys.argv[2] + '_seed_' + str(seed)
