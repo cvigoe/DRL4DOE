@@ -29,7 +29,7 @@ variant = dict(
 )
 
 env_variant = dict(
-    env_str='HalfCheetah-v1',   
+    env_str='HalfCheetah-v2',   
     # num_test_points=10,
     # region_length=5,
     # burnin=5,

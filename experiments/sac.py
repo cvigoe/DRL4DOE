@@ -35,7 +35,7 @@ def experiment(variant, env_variant):
     expl_env = gym.make(env_variant['env_str'])
     eval_env = gym.make(env_variant['env_str'])
 
-    if variant['env_str'] == 'drl4doe-v0':
+    if env_variant['env_str'] == 'drl4doe-v0':
         expl_env.initialise_environment(**env_variant)
         eval_env.initialise_environment(**env_variant)
 
@@ -73,6 +73,7 @@ def experiment(variant, env_variant):
     )
     eval_policy = MakeDeterministic(policy)
     # expl_policy = MakeUCB(policy, UCB_rate=UCB_rate)
+    expl_policy = policy
     eval_path_collector = MdpPathCollector(
         eval_env,
         eval_policy,
