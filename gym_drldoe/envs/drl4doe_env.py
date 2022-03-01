@@ -107,7 +107,9 @@ class DRL4DOE(gym.Env):
             reward -= inst_regret/(self.NUM_MC_ITERS+1)
 
         if self.reciprocal:
-            reward = 1/((-1*reward)+1e-4)
+            cost = -1*reward
+            cost = np.clip(cost, 1e-10, 1e10)
+            reward = -np.log(cost)
 
         return (np.concatenate([mu,np.log(diag_Sig)]),
         np.array(reward),
