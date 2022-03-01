@@ -119,7 +119,8 @@ if __name__ == "__main__":
     for seed in range(10):
         LR_coeff = 1+(np.random.rand()*4)
         LR = LR_coeff*(1e-4)
-        reward_scale = 2+np.random.rand()*2
+        # reward_scale = 2+np.random.rand()*2
+        reward_scale = 1/(2+np.random.rand()*4)
         layer_size_actor = np.random.choice([64, 128, 256])
         discount = 0.75 + np.random.rand()/4
         UCB_rate = (np.random.rand()/4)
