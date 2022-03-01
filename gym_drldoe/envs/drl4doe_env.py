@@ -28,7 +28,7 @@ class DRL4DOE(gym.Env):
 
     def initialise_environment(self, env_str, noise_sigma=.1, T=30, 
         region_length=20, NUM_MC_ITERS=500,num_test_points=50,
-        burnin=5):
+        burnin=5, reciprocal=False):
         self.num_test_points = num_test_points
         self.action_space = spaces.Box( np.array([0]) , np.array([num_test_points]) )
         diag_dim = self.num_test_points*2
@@ -42,6 +42,7 @@ class DRL4DOE(gym.Env):
         self.T = T
         self.NUM_MC_ITERS = NUM_MC_ITERS
         self.burnin = burnin
+        self.reciprocal = reciprocal
 
     def reset(self):
         """Resets the gym environment, redrawing ground truth
@@ -104,6 +105,9 @@ class DRL4DOE(gym.Env):
             draw = self.GP.draw(mu, Sig)
             inst_regret = max(draw) - mu[action]
             reward -= inst_regret/(self.NUM_MC_ITERS+1)
+
+        if self.reciprocal:
+            reward = 1/((-1*reward)+1e-4)
 
         return (np.concatenate([mu,np.log(diag_Sig)]),
         np.array(reward),
