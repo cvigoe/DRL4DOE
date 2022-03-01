@@ -30,8 +30,8 @@ variant = dict(
 
 env_variant = dict(
     env_str='drl4doe-v0',   
-    num_test_points=10,
-    region_length=5,
+    num_test_points=50,
+    region_length=20,
     burnin=0,
     reciprocal=True
 )
